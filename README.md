@@ -4,4 +4,6 @@ The single source of truth for tool documentation/instructions is the tool itsel
 
 To view the documentation, invoke the script with the `-h` flag like so:
 
-> ./quantitative-testing.sh -h
+``
+./quantitative-testing.sh -h
+``
