@@ -26,6 +26,7 @@
 # Invoke this script with the -h option to print the full usage documentation.
 
 # Future ideas
+# - Add option to include the rule severity level, e.g. "CRITICAL"
 # - Add options to test other parts of HTTP requests, e.g. cookies, query string
 #   parameters
 # - Test with languages other than English, e.g. German, French, Arabic
