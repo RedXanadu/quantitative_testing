@@ -16,7 +16,7 @@
 
 
 # CRS Quantitative Testing Script
-# v1.0
+# v1.1
 # Written by Andrew Howe (andrew.howe@owasp.org)
 #
 # This script takes input from a corpus of natural language and tests it against
@@ -120,6 +120,7 @@ trap "rm $tmp_file" QUIT TERM EXIT
 # If colour output mode has been disabled then disable it now by emptying the
 # colour strings
 if [ $colour_output -eq 0 ]; then
+	colour_reset=""
 	colour_primary_bold=""
 	colour_secondary=""
 	colour_error=""
