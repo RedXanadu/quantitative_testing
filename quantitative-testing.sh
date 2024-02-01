@@ -30,7 +30,7 @@
 # - Add options to test other parts of HTTP requests, e.g. cookies, query string
 #   parameters
 # - Test with languages other than English, e.g. German, French, Arabic
-# - A Go rewrite of this script
+# - A Rust rewrite of this script
 
 
 # Configure strings for colour output
