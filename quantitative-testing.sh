@@ -16,7 +16,7 @@
 
 
 # CRS Quantitative Testing Script
-# v1.1
+# v1.2
 # Written by Andrew Howe (andrew.howe@owasp.org)
 #
 # This script takes input from a corpus of natural language and tests it against
@@ -209,11 +209,14 @@ do
 	# and the payload number.
 	payload_num=$(echo "$sentence" | cut -f1)
 	payload=$(echo "$sentence" | cut -f2)
+	payload_url_encoded=$(echo "$sentence" | cut -f2 | jq --raw-input --raw-output @uri)
 
 	# Send the payload
 	# If it takes longer than 2 seconds to get a response then something has
 	# gone seriously wrong.
-	curl --silent -o/dev/null --connect-timeout 2 "$server/post" --data "payload=$payload"
+	curl --silent -o/dev/null --connect-timeout 2 "$server/post?payload=$payload_url_encoded" --data "payload=$payload_url_encoded"
+	#curl --silent -o/dev/null --connect-timeout 2 "$server/post" --data "payload=$payload_url_encoded"
+	#curl --silent -o/dev/null --connect-timeout 2 "$server/get?payload=$payload_url_encoded"
 	# Provide feedback via a warning message if the curl call did not succeed
 	if [ $? -ne 0 ]; then
 		echo -e "${colour_warning}WARNING: curl call to send payload $payload_num did not succeed.${colour_reset}" >&2
@@ -291,6 +294,9 @@ do
 				# Process log lines that are *missing* an intact
 				# paranoia level tag
 				grep '\[severity ".*"\]' $logfile | grep '\[id "'$rule_id_of_interest'"\]' | grep -v "paranoia-level/[0-9]" | sed -E 's#^.*\[id "([0-9]*)"\].*$#\1 PL MISSING#' >> $tmp_file
+				# Echo a newline to separate this payload's
+				# output from the next
+				echo >> $tmp_file
 
 			# Default: show output for all rules
 			else
@@ -300,6 +306,9 @@ do
 				# Process log lines that are *missing* an intact
 				# paranoia level tag
 				grep '\[severity ".*"\]' $logfile | grep -v "paranoia-level/[0-9]" | sed -E 's#^.*\[id "([0-9]*)"\].*$#\1 PL MISSING#' >> $tmp_file
+				# Echo a newline to separate this payload's
+				# output from the next
+				echo >> $tmp_file
 			fi
 		fi
 
@@ -334,6 +343,14 @@ if [ $full_log_output -eq 0 ]; then
 	fi
 
 	# Sort and print the intermediate results in the temporary file.
+	#
+	# First, run uniq to remove duplicate entries for the same rule for the
+	# same payload (e.g. payload 1 triggers rule 2468 twice: we only want to
+	# record that as a single event, we don't care that there were
+	# multiples, only that rule 2468 *did* trigger.)
+	# At a point after this has happened, we also remove all lines without
+	# content to remove the empty lines that separate logs for each payload.
+	#
 	# When testing uniqueness and counting, only test the first 6 characters
 	# (i.e. the rule ID number). This means that lines like
 	#   942200 PL2
@@ -344,8 +361,8 @@ if [ $full_log_output -eq 0 ]; then
 	# counting purposes.)
 
 	if [ $markdown_output -eq 0 ]; then
-		sort -n $tmp_file | uniq --count --check-chars=6 | sort -rn
+		uniq $tmp_file | grep -v "^\s*$" | sort -n | uniq --count --check-chars=6 | sort -rn
 	else
-		sort -n $tmp_file | uniq --count --check-chars=6 | sort -rn | sed -E -e 's#([^ ]) ([^ ])#\1 | \2#g' -e 's#^#|#' -e 's#$#            |#'
+		uniq $tmp_file | grep -v "^\s*$" | sort -n | uniq --count --check-chars=6 | sort -rn | sed -E -e 's#([^ ]) ([^ ])#\1 | \2#g' -e 's#^#|#' -e 's#$#            |#'
 	fi
 fi
